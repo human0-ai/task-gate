@@ -1,0 +1,12 @@
+{
+  "name": "@human0/task-gate",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A CI merge gate that blocks an agent-authored PR until its linked Human0 task is independently approved.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "node --test",
+    "lint": "node --check run.mjs && node --check gate.mjs && node --check gate.test.mjs"
+  }
+}

@@ -1,0 +1,41 @@
+name: Release
+
+# Releases are driven by package.json. On every push to main, if the version
+# there hasn't been tagged yet, tag it (vX.Y.Z), move the floating major tag
+# (vX) to that commit so `@vX` consumers pick it up, and cut a GitHub release.
+#
+# To ship a release: bump the version in package.json in a PR — merging it
+# releases. PR CI (ci.yml) already gates the code before it reaches main.
+on:
+  push:
+    branches: [main]
+    paths: ["package.json"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Tag and release if the version is new
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v$(node -p "require('./package.json').version")"
+          MAJOR="${TAG%%.*}"   # v1.2.3 -> v1
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "$TAG is already tagged — nothing to release."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "$TAG"
+          git tag -f "$MAJOR" "$TAG"
+          git push origin "refs/tags/$TAG"
+          git push origin "refs/tags/$MAJOR" --force
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "$TAG" --generate-notes

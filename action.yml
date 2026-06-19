@@ -1,0 +1,34 @@
+name: human0 Task Gate
+description: A merge gate that stays red until an agent-authored PR's linked Human0 task is independently approved.
+author: human0
+
+branding:
+  icon: shield
+  color: purple
+
+inputs:
+  pr_number:
+    description: Pull request number.
+    required: true
+  repo:
+    description: Repository in owner/name form.
+    required: true
+  github_token:
+    description: GitHub token used to read the PR.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "24"
+
+    - name: Run gate
+      shell: bash
+      run: node ${{ github.action_path }}/run.mjs
+      env:
+        GH_TOKEN: ${{ inputs.github_token }}
+        REPO: ${{ inputs.repo }}
+        PR_NUMBER: ${{ inputs.pr_number }}
