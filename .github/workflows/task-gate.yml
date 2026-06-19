@@ -1,0 +1,31 @@
+name: Task Gate
+
+# This repo runs its own gate with `uses: ./`, so a change that breaks the
+# action shows up on its own PR before it's released. The gate only acts on
+# PRs opened by the Human0 app that link a task — PRs here are authored by
+# people, so it passes through; this is a smoke test that the action runs.
+on:
+  pull_request:
+    # `edited` so adding the Task: link to the description re-runs the gate.
+    types: [opened, synchronize, ready_for_review, edited, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  gate:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: task-gate-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./
+        with:
+          pr_number: ${{ github.event.pull_request.number }}
+          repo: ${{ github.repository }}
+          github_token: ${{ github.token }}
