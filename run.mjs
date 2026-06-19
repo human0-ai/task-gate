@@ -1,11 +1,16 @@
 import { execFileSync } from "child_process";
 import { parseTaskLink, buildGateUrl, isAppAuthor } from "./gate.mjs";
 
+// The gate is Human0's own: it always asks the production dashboard, and gates
+// PRs opened by the Human0 GitHub App. Both are baked in rather than passed as
+// inputs — there's nothing repo-specific to configure, and the endpoint returns
+// only a boolean for a task + PR that already reference each other, so the call
+// needs no secret.
+const ENDPOINT_BASE = "https://dashboard.human0.ai";
+const APP_LOGIN = "human0-ai[bot]";
+
 const REPO = requireEnv("REPO");
 const PR_NUMBER = requireEnv("PR_NUMBER");
-const ENDPOINT_BASE = requireEnv("ENDPOINT_BASE");
-const GATE_TOKEN = requireEnv("GATE_TOKEN");
-const APP_LOGIN = requireEnv("APP_LOGIN");
 
 function requireEnv(name) {
   const value = process.env[name];
@@ -55,9 +60,9 @@ console.log(`Checking task ${taskId} against ${ENDPOINT_BASE} …`);
 
 let verdict;
 try {
-  const resp = await fetch(gateUrl, {
-    headers: { authorization: `Bearer ${GATE_TOKEN}` },
-  });
+  // No auth: the endpoint returns only a boolean for a task + PR that already
+  // reference each other, so there's nothing to protect with a secret.
+  const resp = await fetch(gateUrl);
   // A non-2xx from the gate is a fault on our side, not a verdict — fail closed
   // so a broken endpoint can never silently wave a PR through.
   if (!resp.ok) {

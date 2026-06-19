@@ -27,8 +27,9 @@ On every pull request the action:
    scope.
 2. **Finds the task link.** An app PR must carry a `Task: <url>/tasks/<id>` line
    in its description. Missing → the gate fails.
-3. **Asks the platform.** It calls an authenticated endpoint with the task id and
-   this PR's URL, which answers `approved` or `blocked`.
+3. **Asks the platform.** It calls the Human0 dashboard with the task id and this
+   PR's URL, which answers `approved` or `blocked`. No secret — the endpoint
+   returns only a boolean for a task and PR that already reference each other.
 4. **Sets the check.** `approved` → green; `blocked` → red, with the reason in the
    Checks tab.
 
@@ -37,10 +38,8 @@ approval, so the PR merges on its own once review lands.
 
 ## Set it up
 
-1. **Add the gate secret** — **Settings → Secrets and variables → Actions**, add
-   `TASK_GATE_TOKEN`, the shared secret the platform expects on the endpoint.
-
-2. **Add the workflow** at `.github/workflows/task-gate.yml`:
+No secrets, no configuration. Add the workflow at
+`.github/workflows/task-gate.yml`:
 
 ```yaml
 name: Task Gate
@@ -67,14 +66,10 @@ jobs:
           pr_number: ${{ github.event.pull_request.number }}
           repo: ${{ github.repository }}
           github_token: ${{ github.token }}
-          endpoint_base: https://dashboard.human0.ai
-          gate_token: ${{ secrets.TASK_GATE_TOKEN }}
-          app_login: human0-ai[bot]
 ```
 
-3. **Require the check.** In branch protection, mark `task-gate` a **required
-   status check** on the default branch. Without "required", a red check doesn't
-   block the merge.
+Then mark `task-gate` a **required status check** on the default branch in branch
+protection — without "required", a red check doesn't block the merge.
 
 ## Inputs
 
@@ -83,9 +78,9 @@ jobs:
 | `pr_number` | yes | Pull request number. Use `${{ github.event.pull_request.number }}`. |
 | `repo` | yes | Repository in `owner/name` form. Use `${{ github.repository }}`. |
 | `github_token` | yes | Token used to read the PR. Use `${{ github.token }}`. |
-| `endpoint_base` | yes | Base URL of the Human0 dashboard serving the gate endpoint. |
-| `gate_token` | yes | Shared secret authenticating the gate call. |
-| `app_login` | yes | GitHub login of the Human0 app whose PRs are gated. |
+
+The dashboard URL and the gated app login are baked into the action — there's
+nothing repo-specific to configure.
 
 ## Why a separate action
 

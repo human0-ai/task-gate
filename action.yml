@@ -16,15 +16,6 @@ inputs:
   github_token:
     description: GitHub token used to read the PR.
     required: true
-  endpoint_base:
-    description: Base URL of the Human0 dashboard that serves the gate-status endpoint (e.g. https://dashboard.human0.ai).
-    required: true
-  gate_token:
-    description: Shared secret authenticating the call to the gate-status endpoint.
-    required: true
-  app_login:
-    description: GitHub login of the Human0 app whose PRs are gated (human-authored PRs pass through).
-    required: true
 
 runs:
   using: composite
@@ -41,6 +32,3 @@ runs:
         GH_TOKEN: ${{ inputs.github_token }}
         REPO: ${{ inputs.repo }}
         PR_NUMBER: ${{ inputs.pr_number }}
-        ENDPOINT_BASE: ${{ inputs.endpoint_base }}
-        GATE_TOKEN: ${{ inputs.gate_token }}
-        APP_LOGIN: ${{ inputs.app_login }}
