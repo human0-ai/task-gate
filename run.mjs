@@ -50,7 +50,7 @@ if (!isAppAuthor(pr.author, APP_LOGIN)) {
 const taskId = parseTaskLink(pr.body);
 if (!taskId) {
   fail(
-    `app-authored PR must link its task — add a "Task: ${ENDPOINT_BASE.replace(/\/+$/, "")}/tasks/<id>" ` +
+    `app-authored PR must link its task — add a "Task: ${ENDPOINT_BASE}/tasks/<id>" ` +
       "line to the PR description.",
   );
 }
@@ -58,19 +58,26 @@ if (!taskId) {
 const gateUrl = buildGateUrl(ENDPOINT_BASE, taskId, pr.url);
 console.log(`Checking task ${taskId} against ${ENDPOINT_BASE} …`);
 
-let verdict;
+let resp;
 try {
   // No auth: the endpoint returns only a boolean for a task + PR that already
   // reference each other, so there's nothing to protect with a secret.
-  const resp = await fetch(gateUrl);
-  // A non-2xx from the gate is a fault on our side, not a verdict — fail closed
-  // so a broken endpoint can never silently wave a PR through.
-  if (!resp.ok) {
-    fail(`gate endpoint returned HTTP ${resp.status} — failing closed until it recovers.`);
-  }
-  verdict = await resp.json();
+  resp = await fetch(gateUrl);
 } catch (e) {
   fail(`could not reach the gate endpoint: ${e.message}`);
+}
+// A non-2xx from the gate is a fault on our side, not a verdict — fail closed
+// so a broken endpoint can never silently wave a PR through.
+if (!resp.ok) {
+  fail(`gate endpoint returned HTTP ${resp.status} — failing closed until it recovers.`);
+}
+// Parse separately: a reachable endpoint that returns a non-JSON body (a proxy
+// or CDN error page) is its own failure, not an unreachable one.
+let verdict;
+try {
+  verdict = await resp.json();
+} catch {
+  fail("gate endpoint returned a non-JSON response — failing closed.");
 }
 
 const status = verdict?.status;
