@@ -1,9 +1,9 @@
 name: Task Gate
 
-# This repo runs its own gate with `uses: ./`, so a change that breaks the
-# action shows up on its own PR before it's released. The gate only acts on
-# PRs opened by the Human0 app that link a task — PRs here are authored by
-# people, so it passes through; this is a smoke test that the action runs.
+# This repo runs its own gate, pinned to the released @v1 like every other
+# consumer. The gate only acts on PRs opened by the Human0 app that link a task —
+# PRs here are authored by people, so it passes through; this is a smoke test
+# that the released action runs.
 on:
   pull_request:
     # `edited` so adding the Task: link to the description re-runs the gate.
@@ -22,9 +22,7 @@ jobs:
       group: task-gate-${{ github.event.pull_request.number }}
       cancel-in-progress: true
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: ./
+      - uses: human0-ai/task-gate@v1
         with:
           pr_number: ${{ github.event.pull_request.number }}
           repo: ${{ github.repository }}
