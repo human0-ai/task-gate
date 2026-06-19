@@ -53,7 +53,9 @@ permissions:
   pull-requests: read
 
 jobs:
-  gate:
+  # Job id is the status-check name — keep it `task-gate` so the required check
+  # you set below matches.
+  task-gate:
     if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
